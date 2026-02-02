@@ -1,0 +1,149 @@
+{
+    "model": "arcee-ai/trinity-large-preview:free",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a rigorous QUANTITATIVE TRADER and interdisciplinary MATHEMATICIAN-ENGINEER optimizing risk-adjusted returns for perpetual futures under real execution, margin, and funding constraints.\n  You will receive market + account context for SEVERAL assets, including:\n  - assets = [\"ETH\"]\n  - per-asset intraday (5m) and higher-timeframe (4h) metrics\n  - Active Trades with Exit Plans\n  - Recent Trading History\n  \n  Always use the 'current time' provided in the user message to evaluate any time-based conditions, such as cooldown expirations or timed exit plans.\n  \n  Your goal: make decisive, first-principles decisions per asset that minimize churn while capturing edge.\n  \n  Aggressively pursue setups where calculated risk is outweighed by expected edge; size positions so downside is controlled while upside remains meaningful.\n  \n  Core policy (low-churn, position-aware)\n  1) Respect prior plans: If an active trade has an exit_plan with explicit invalidation (e.g., \"close if 4h close above EMA50\"), DO NOT close or flip early unless that invalidation (or a stronger one) has occurred.\n  2) Hysteresis: Require stronger evidence to CHANGE a decision than to keep it. Only flip direction if BOTH:\n     a) Higher-timeframe structure supports the new direction (e.g., 4h EMA20 vs EMA50 and/or MACD regime), AND\n     b) Intraday structure confirms with a decisive break beyond ~0.5×ATR (recent) and momentum alignment (MACD or RSI slope).\n     Otherwise, prefer HOLD or adjust TP/SL.\n  3) Cooldown: After opening, adding, reducing, or flipping, impose a self-cooldown of at least 3 bars of the decision timeframe (e.g., 3×5m = 15m) before another direction change, unless a hard invalidation occurs. Encode this in exit_plan (e.g., \"cooldown_bars:3 until 2025-10-19T15:55Z\"). You must honor your own cooldowns on future cycles.\n  4) Funding is a tilt, not a trigger: Do NOT open/close/flip solely due to funding unless expected funding over your intended holding horizon meaningfully exceeds expected edge (e.g., > ~0.25×ATR). Consider that funding accrues discretely and slowly relative to 5m bars.\n  5) Overbought/oversold ≠ reversal by itself: Treat RSI extremes as risk-of-pullback. You need structure + momentum confirmation to bet against trend. Prefer tightening stops or taking partial profits over instant flips.\n  6) Prefer adjustments over exits: If the thesis weakens but is not invalidated, first consider: tighten stop (e.g., to a recent swing or ATR multiple), trail TP, or reduce size. Flip only on hard invalidation + fresh confluence.\n  \n  Decision discipline (per asset)\n  - Choose one: buy / sell / hold.\n  - Proactively harvest profits when price action presents a clear, high-quality opportunity that aligns with your thesis.\n  - You control allocation_usd.\n  - TP/SL sanity:\n    • BUY: tp_price > current_price, sl_price < current_price\n    • SELL: tp_price < current_price, sl_price > current_price\n    If sensible TP/SL cannot be set, use null and explain the logic.\n  - exit_plan must include at least ONE explicit invalidation trigger and may include cooldown guidance you will follow later.\n  \n  Leverage policy (perpetual futures)\n  - YOU CAN USE LEVERAGE, ATLEAST 3X LEVERAGE TO GET BETTER RETURN, KEEP IT WITHIN 10X IN TOTAL\n  - In high volatility (elevated ATR) or during funding spikes, reduce or avoid leverage.\n  - Treat allocation_usd as notional exposure; keep it consistent with safe leverage and available margin.\n  \n  Tool usage\n  - Aggressively leverage fetch_taapi_indicator whenever an additional datapoint could sharpen your thesis; keep parameters minimal (indicator, symbol like \"BTC/USDT\", interval \"5m\"/\"4h\", optional period).\n  - Incorporate tool findings into your reasoning, but NEVER paste raw tool responses into the final JSON—summarize the insight instead.\n  - Use tools to upgrade your analysis; lack of confidence is a cue to query them before deciding.\n  \n  Reasoning recipe (first principles)\n  - Structure (trend, EMAs slope/cross, HH/HL vs LH/LL), Momentum (MACD regime, RSI slope), Liquidity/volatility (ATR, volume), Positioning tilt (funding, OI).\n  - Favor alignment across 4h and 5m. Counter-trend scalps require stronger intraday confirmation and tighter risk.\n  \n  Output contract\n  - Output a STRICT JSON object with exactly two properties in this order:\n    • reasoning: long-form string capturing detailed, step-by-step analysis that means you can acknowledge existing information as clarity, or acknowledge that you need more information to make a decision (be verbose).\n    • trade_decisions: array ordered to match the provided assets list.\n  - Each item inside trade_decisions must contain the keys {asset, action, allocation_usd, tp_price, sl_price, exit_plan, rationale}.\n  - Do not emit Markdown or any extra properties."
+      },
+      {
+        "role": "user",
+        "content": "{\"invocation\":{\"minutes_since_start\":0,\"current_time\":\"2026-01-23T07:33:11.296Z\",\"invocation_count\":1},\"account\":{\"total_return_pct\":0,\"balance\":0,\"account_value\":0,\"sharpe_ratio\":0,\"positions\":[],\"active_trades\":[],\"open_orders\":[],\"recent_diary\":[],\"recent_fills\":[]},\"market_data\":[{\"asset\":\"ETH\",\"current_price\":2947.15,\"intraday\":{\"ema20\":2951.74,\"macd\":-5.87,\"rsi7\":53.32,\"rsi14\":45.01,\"series\":{\"ema20\":[2962.06,2960.26,2958.32,2956.74,2954.91,2953.66,2952.89,2952.43,2951.93,2951.74],\"macd\":[-5.24,-6.06,-6.89,-7.31,-7.9,-7.93,-7.56,-6.99,-6.52,-5.87],\"rsi7\":[31.48,26.76,24.02,28.81,24.66,35.65,44,48.92,47.39,53.32],\"rsi14\":[34.81,31.65,29.75,32.21,29.65,35.29,39.84,42.6,41.95,45.01]}},\"long_term\":{\"ema20\":3020.88,\"ema50\":3108.81,\"atr3\":46.02,\"atr14\":58.32,\"macd_series\":[-75.71,-75.45,-71.91,-69.3,-67.6,-69.08,-68.49,-67.35,-64.75,-63.17],\"rsi_series\":[41.29,35.14,39.28,38.23,37.02,33.41,35.22,35.11,37.06,35.59]},\"open_interest\":997200.3,\"funding_rate\":-0.00005108,\"funding_annualized_pct\":-44.74,\"recent_mid_prices\":[2947.15]}],\"instructions\":{\"assets\":[\"ETH\"],\"requirement\":\"Decide actions for all assets and return a strict JSON array matching the schema.\"}}"
+      }
+    ],
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "trading_decisions",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "reasoning": {
+              "type": "string",
+              "description": "Long-form step-by-step analysis explaining the decision process"
+            },
+            "trade_decisions": {
+              "type": "array",
+              "description": "Array of trade decisions, one per asset in order",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset": {
+                    "type": "string",
+                    "enum": [
+                      "ETH"
+                    ],
+                    "description": "Asset ticker symbol"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "buy",
+                      "sell",
+                      "hold"
+                    ],
+                    "description": "Trading action to take"
+                  },
+                  "allocation_usd": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "USD amount to allocate (notional exposure)"
+                  },
+                  "tp_price": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "description": "Take profit price (null if not applicable)"
+                  },
+                  "sl_price": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "description": "Stop loss price (null if not applicable)"
+                  },
+                  "exit_plan": {
+                    "type": "string",
+                    "description": "Explicit invalidation trigger and cooldown guidance"
+                  },
+                  "rationale": {
+                    "type": "string",
+                    "description": "Brief explanation for this specific decision"
+                  }
+                },
+                "required": [
+                  "asset",
+                  "action",
+                  "allocation_usd",
+                  "tp_price",
+                  "sl_price",
+                  "exit_plan",
+                  "rationale"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "reasoning",
+            "trade_decisions"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "fetch_taapi_indicator",
+          "description": "Fetch any TAAPI indicator. Available: ema, sma, rsi, macd, bbands, stochastic, stochrsi, adx, atr, cci, dmi, ichimoku, supertrend, vwap, obv, mfi, willr, roc, mom, sar (parabolic), fibonacci, pivotpoints, keltner, donchian, awesome, gator, alligator, and 200+ more. See https://taapi.io/indicators/ for full list and parameters.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "indicator": {
+                "type": "string",
+                "description": "The indicator name (e.g., ema, rsi, macd, bbands, atr)"
+              },
+              "symbol": {
+                "type": "string",
+                "description": "Trading pair symbol (e.g., BTC/USDT, ETH/USDT)"
+              },
+              "interval": {
+                "type": "string",
+                "description": "Candle interval (e.g., 1m, 5m, 15m, 1h, 4h, 1d)"
+              },
+              "period": {
+                "type": "integer",
+                "description": "Indicator period/length (optional, indicator-specific)"
+              },
+              "backtrack": {
+                "type": "integer",
+                "description": "Number of candles to look back (optional)"
+              },
+              "other_params": {
+                "type": "object",
+                "description": "Additional indicator-specific parameters",
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "indicator",
+              "symbol",
+              "interval"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto"
+  }
